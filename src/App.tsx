@@ -213,7 +213,7 @@ const TrendHubPro = () => {
               {item.type === 'image' && (
                 <div className="w-full relative overflow-hidden" style={{ backgroundColor: item.color || '#eee', height: item.height ? `${item.height}px` : '300px' }}>
                    {/* Panggil URL asli dari Unsplash */}
-                   <img src={item.url || `https://source.unsplash.com/random/400x300?sig=${item.id}`} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700" alt="visual"/>
+                   <img src={item.url || "https://placehold.co/600x400?text=Design"}`} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700" alt="visual"/>
                    
                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
                       <button onClick={() => toggleSave(item.id)} className="bg-white p-2 rounded-full shadow-sm hover:scale-110 transition">
