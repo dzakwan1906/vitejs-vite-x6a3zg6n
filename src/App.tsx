@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-// --- BAGIAN 1: IKON MANUAL (Tanpa Install Apapun) ---
+// --- BAGIAN 1: IKON MANUAL ---
 const Icon = ({ path, className }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -76,7 +76,6 @@ const TrendHubPro = () => {
   const [savedIds, setSavedIds] = useState([]);
   const [readingArticle, setReadingArticle] = useState(null);
   
-  // Menggunakan setIsLive agar tidak ada error "unused variable"
   const [isLive, setIsLive] = useState(true); 
 
   useEffect(() => {
