@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 
-// --- BAGIAN 1: IKON MANUAL (SOLUSI SUPAYA TIDAK PERLU INSTALL APAPUN) ---
-// Kita membuat ikon sendiri menggunakan SVG, jadi error 'lucide-react' pasti hilang.
-const Icon = ({ path }) => (
+// --- BAGIAN 1: DEFINISI TIPE DATA (Agar TypeScript Senang) ---
+interface TrendItem {
+  id: number;
+  type: 'image' | 'font' | 'article';
+  title: string;
+  category?: string;
+  height?: number;
+  color?: string;
+  style?: string;
+  preview?: string;
+  tag?: string;
+  source?: string;
+  readTime?: string;
+  summary?: string;
+  content?: string;
+  isNew?: boolean;
+}
+
+// --- BAGIAN 2: IKON MANUAL (Tanpa Install Apapun) ---
+const Icon = ({ path }: { path: React.ReactNode }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     width="24" height="24" viewBox="0 0 24 24" 
@@ -15,13 +32,13 @@ const Icon = ({ path }) => (
 
 const Icons = {
   Search: () => <Icon path={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} />,
-  Heart: ({ filled }) => (
+  Heart: ({ filled }: { filled?: boolean }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
     </svg>
   ),
   Zap: () => <Icon path={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>} />,
-  Bookmark: ({ filled }) => (
+  Bookmark: ({ filled }: { filled?: boolean }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
     </svg>
@@ -35,17 +52,17 @@ const Icons = {
 };
 
 // --- DATA DUMMY ---
-const INITIAL_IMAGES = [
+const INITIAL_IMAGES: TrendItem[] = [
   { id: 1, type: 'image', title: "Minimalist Poster", category: "Graphic", height: 300, color: "bg-blue-50" },
   { id: 2, type: 'image', title: "Cyberpunk City", category: "Photo", height: 400, color: "bg-purple-50" },
 ];
 
-const INITIAL_FONTS = [
+const INITIAL_FONTS: TrendItem[] = [
   { id: 101, type: 'font', title: "Helios Antique", style: "Serif", preview: "Aa", tag: "Elegant" },
   { id: 102, type: 'font', title: "Neue Montreal", style: "Sans-Serif", preview: "Gg", tag: "Modern" },
 ];
 
-const INITIAL_ARTICLES = [
+const INITIAL_ARTICLES: TrendItem[] = [
   { 
     id: 201, 
     type: 'article', 
@@ -68,12 +85,12 @@ const INITIAL_ARTICLES = [
 
 const TrendHubPro = () => {
   const [activeTab, setActiveTab] = useState('feed'); 
-  const [feedItems, setFeedItems] = useState(INITIAL_IMAGES);
-  const [fontItems, setFontItems] = useState(INITIAL_FONTS);
-  const [articleItems, setArticleItems] = useState(INITIAL_ARTICLES);
-  const [savedIds, setSavedIds] = useState([]);
-  const [readingArticle, setReadingArticle] = useState(null);
-  const [isLive, setIsLive] = useState(true);
+  const [feedItems, setFeedItems] = useState<TrendItem[]>(INITIAL_IMAGES);
+  const [fontItems, setFontItems] = useState<TrendItem[]>(INITIAL_FONTS);
+  const [articleItems, setArticleItems] = useState<TrendItem[]>(INITIAL_ARTICLES);
+  const [savedIds, setSavedIds] = useState<number[]>([]);
+  const [readingArticle, setReadingArticle] = useState<TrendItem | null>(null);
+  const [isLive] = useState(true); // set setIsLive removed to fix warning
 
   useEffect(() => {
     const saved = localStorage.getItem('mySavedTrends_v2');
@@ -81,22 +98,22 @@ const TrendHubPro = () => {
   }, []);
 
   useEffect(() => {
-    let interval;
+    let interval: any;
     if (isLive && activeTab !== 'saved') {
       interval = setInterval(() => {
         const id = Date.now();
         if (activeTab === 'feed') {
-          setFeedItems(prev => [{ id, type: 'image', title: `New Trend #${id.toString().slice(-3)}`, category: "Design", height: Math.floor(Math.random() * 200 + 200), color: "bg-gray-100", isNew: true }, ...prev]);
+          setFeedItems(prev => [{ id, type: 'image', title: `New Trend #${id.toString().slice(-3)}`, category: "Design", height: Math.floor(Math.random() * 200 + 200), color: "bg-gray-100", isNew: true } as TrendItem, ...prev]);
         } 
         else if (activeTab === 'fonts') {
           const styles = ["Serif", "Sans", "Mono", "Display"];
-          setFontItems(prev => [{ id, type: 'font', title: `Font #${id.toString().slice(-3)}`, style: styles[Math.floor(Math.random()*4)], preview: "R", tag: "Trending", isNew: true }, ...prev]);
+          setFontItems(prev => [{ id, type: 'font', title: `Font #${id.toString().slice(-3)}`, style: styles[Math.floor(Math.random()*4)], preview: "R", tag: "Trending", isNew: true } as TrendItem, ...prev]);
         }
         else if (activeTab === 'articles') {
-          setArticleItems(prev => [{ id, type: 'article', title: `Update Industri Kreatif #${id.toString().slice(-3)}`, source: "TechCrunch", readTime: "3 min", summary: "Berita terbaru seputar dunia desain...", content: "Isi artikel simulasi...", isNew: true }, ...prev]);
+          setArticleItems(prev => [{ id, type: 'article', title: `Update Industri Kreatif #${id.toString().slice(-3)}`, source: "TechCrunch", readTime: "3 min", summary: "Berita terbaru seputar dunia desain...", content: "Isi artikel simulasi...", isNew: true } as TrendItem, ...prev]);
         }
         setTimeout(() => {
-          const removeNewFlag = (items) => items.map(i => i.id === id ? { ...i, isNew: false } : i);
+          const removeNewFlag = (items: TrendItem[]) => items.map(i => i.id === id ? { ...i, isNew: false } : i);
           if (activeTab === 'feed') setFeedItems(prev => removeNewFlag(prev));
           if (activeTab === 'fonts') setFontItems(prev => removeNewFlag(prev));
           if (activeTab === 'articles') setArticleItems(prev => removeNewFlag(prev));
@@ -106,7 +123,7 @@ const TrendHubPro = () => {
     return () => clearInterval(interval);
   }, [isLive, activeTab]);
 
-  const toggleSave = (id) => {
+  const toggleSave = (id: number) => {
     const newSaved = savedIds.includes(id) ? savedIds.filter(sid => sid !== id) : [...savedIds, id];
     setSavedIds(newSaved);
     localStorage.setItem('mySavedTrends_v2', JSON.stringify(newSaved));
@@ -134,7 +151,7 @@ const TrendHubPro = () => {
               <div className="w-5 h-5"><Icons.X /></div>
             </button>
             <span className="text-lime-600 font-bold tracking-widest text-xs uppercase mb-2 block">{readingArticle.source} • {readingArticle.readTime} Read</span>
-            <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">{readingArticle.title}</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">{readingArticle.title || 'Untitled'}</h1>
             <div className="prose prose-lg prose-slate text-gray-700 leading-relaxed">
               <p className="text-xl text-black font-serif mb-6">{readingArticle.summary}</p>
               <p>{readingArticle.content}</p>
@@ -158,7 +175,10 @@ const TrendHubPro = () => {
             { id: 'saved', icon: Icons.Bookmark, label: 'Saved' }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}>
-              <div className="w-4 h-4"><tab.icon filled={activeTab === tab.id} /></div>
+              <div className="w-4 h-4">
+                {/* @ts-ignore */}
+                <tab.icon filled={activeTab === tab.id} />
+              </div>
               {tab.label}
             </button>
           ))}
