@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-// --- KUNCI RAHASIA UNSPLASH KAMU (SUDAH DIPASANG) ---
+// --- KUNCI RAHASIA UNSPLASH ---
 const UNSPLASH_ACCESS_KEY = "5BVjPrhMACUT-tx8iqvJRkOi8BG78RH2CGE1bork9v"; 
 
 // --- BAGIAN 1: IKON MANUAL ---
@@ -39,9 +39,9 @@ const Icons = {
   Share2: (props) => <Icon {...props} path={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />,
 };
 
-// --- DATA DUMMY CADANGAN (Jaga-jaga kalau API error) ---
+// --- DATA DUMMY ---
 const INITIAL_IMAGES = [
-  { id: 1, type: 'image', title: "Loading Unsplash...", category: "System", height: 300, color: "bg-gray-200" },
+  { id: 1, type: 'image', title: "Loading Visuals...", category: "System", height: 300, color: "#f3f4f6" },
 ];
 
 const INITIAL_FONTS = [
@@ -84,46 +84,39 @@ const TrendHubPro = () => {
     if (saved) setSavedIds(JSON.parse(saved));
   }, []);
 
-  // --- BAGIAN PENTING: TARIK DATA DARI UNSPLASH ---
+  // --- BAGIAN UTAMA: PENGAMBIL DATA (MODE MANUAL AGAR ANTI-BLOKIR) ---
   useEffect(() => {
-    // Fungsi untuk mengambil gambar asli
-    const fetchUnsplashPhotos = async () => {
+    const loadManualData = () => {
       if (activeTab === 'feed' && isLive) {
-        try {
-          // Kita minta 12 foto random tentang design & minimalis
-          const response = await fetch(`https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&count=12&query=design,minimalist,architecture`);
-          const data = await response.json();
+        // Daftar gambar berkualitas dari Picsum (Anti-CORB)
+        const manualPhotos = [
+          { id: 101, type: 'image', title: "Abstract 3D Shape", user: "CreativeCo", height: 300, color: "#E0F2F1", url: "https://picsum.photos/400/300?random=1" },
+          { id: 102, type: 'image', title: "Minimalist Room", user: "StudioDesign", height: 400, color: "#F3E5F5", url: "https://picsum.photos/400/400?random=2" },
+          { id: 103, type: 'image', title: "Neon Cyberpunk", user: "FutureLabs", height: 250, color: "#ECEFF1", url: "https://picsum.photos/400/250?random=3" },
+          { id: 104, type: 'image', title: "Coffee Aesthetics", user: "BaristaLife", height: 350, color: "#FFF3E0", url: "https://picsum.photos/400/350?random=4" },
+          { id: 105, type: 'image', title: "Mountain View", user: "NaturePh", height: 280, color: "#E8F5E9", url: "https://picsum.photos/400/280?random=5" },
+          { id: 106, type: 'image', title: "Modern Architecture", user: "ArchiView", height: 380, color: "#FAFAFA", url: "https://picsum.photos/400/380?random=6" },
+        ];
 
-          // Cek apakah Unsplash marah (Error limit habis atau kunci salah)
-          if (data.errors) {
-            console.error("Unsplash Error:", data.errors);
-            return;
-          }
+        const timestamp = Date.now();
+        const freshPhotos = manualPhotos.map((p, index) => ({
+          ...p,
+          id: timestamp + index,
+          isNew: true
+        }));
 
-          // Ubah data Unsplash jadi format TrendHub
-          const realPhotos = data.map((img) => ({
-            id: img.id,
-            type: 'image',
-            title: img.description || img.alt_description || 'Untitled Inspiration',
-            category: 'Unsplash',
-            height: (img.height / img.width) * 300, // Hitung tinggi biar rapi
-            color: img.color, // Warna asli foto
-            url: img.urls.regular, // Link foto HD
-            user: img.user.name, // Nama fotografer
-            isNew: true
-          }));
-
-          setFeedItems(realPhotos);
-        } catch (error) {
-          console.log("Gagal mengambil foto (Mungkin limit habis):", error);
-        }
+        setFeedItems(prev => [...freshPhotos, ...prev].slice(0, 50));
       }
     };
 
-    fetchUnsplashPhotos();
+    let interval;
+    if (activeTab === 'feed' && isLive) {
+      loadManualData(); // Load awal
+      interval = setInterval(loadManualData, 5000); // Load tiap 5 detik
+    }
 
-    // Tombol refresh manual (opsional, biar gak boros kuota API)
-  }, [activeTab]); 
+    return () => clearInterval(interval);
+  }, [activeTab, isLive]); 
 
   const toggleSave = (id) => {
     const newSaved = savedIds.includes(id) ? savedIds.filter(sid => sid !== id) : [...savedIds, id];
@@ -136,118 +129,4 @@ const TrendHubPro = () => {
       const allItems = [...feedItems, ...fontItems, ...articleItems];
       return allItems.filter(item => savedIds.includes(item.id));
     }
-    if (activeTab === 'fonts') return fontItems;
-    if (activeTab === 'articles') return articleItems;
-    return feedItems;
-  };
-
-  const items = getDisplayItems();
-
-  return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-lime-200 selection:text-black">
-      
-      {readingArticle && (
-        <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-xl overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-6 py-12 relative">
-            <button onClick={() => setReadingArticle(null)} className="fixed top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition">
-              <div className="w-5 h-5"><Icons.X /></div>
-            </button>
-            <span className="text-lime-600 font-bold tracking-widest text-xs uppercase mb-2 block">{readingArticle.source} • {readingArticle.readTime} Read</span>
-            <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">{readingArticle.title || 'Untitled'}</h1>
-            <div className="prose prose-lg prose-slate text-gray-700 leading-relaxed">
-              <p className="text-xl text-black font-serif mb-6">{readingArticle.summary}</p>
-              <p>{readingArticle.content}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <nav className="fixed top-0 w-full z-40 bg-white/90 backdrop-blur border-b border-gray-100 px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center justify-between w-full md:w-auto">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('feed')}>
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">TH</div>
-            <span className="font-bold text-xl tracking-tighter">TrendHub</span>
-          </div>
-        </div>
-        <div className="flex p-1 bg-gray-100 rounded-full self-center md:self-auto overflow-x-auto max-w-full">
-          {[
-            { id: 'feed', icon: Icons.Image, label: 'Visuals' },
-            { id: 'fonts', icon: Icons.Type, label: 'Fonts' },
-            { id: 'articles', icon: Icons.FileText, label: 'Articles' },
-            { id: 'saved', icon: Icons.Bookmark, label: 'Saved' }
-          ].map(tab => {
-            const IconComponent = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}>
-                <div className="w-4 h-4">
-                  <IconComponent filled={activeTab === tab.id} />
-                </div>
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-        <div className="hidden md:flex items-center gap-3">
-           {/* Tombol Refresh Manual untuk API */}
-           <button onClick={() => window.location.reload()} className="bg-gray-100 p-2 rounded-full hover:bg-gray-200" title="Refresh Images">
-             <div className="w-4 h-4"><Icons.Zap /></div>
-           </button>
-        </div>
-      </nav>
-
-      <main className="pt-32 md:pt-24 px-4 md:px-8 pb-10 max-w-7xl mx-auto">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold mb-2 capitalize">{activeTab === 'saved' ? 'My Collections' : `Trending ${activeTab}`}</h1>
-          <p className="text-gray-500">
-            {activeTab === 'fonts' ? 'Temukan tipografi terbaik untuk project UI-mu.' : 
-             activeTab === 'articles' ? 'Bacaan kurasi dari industri kreatif & teknologi.' :
-             'Inspirasi visual yang dikurasi secara real-time dari Unsplash.'}
-          </p>
-        </div>
-
-        <div className={`grid gap-6 ${activeTab === 'articles' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
-          {items.map((item) => (
-            <div key={item.id} className={`group relative bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 ${item.isNew ? 'animate-bounce ring-2 ring-blue-500' : ''}`}>
-              
-              {/* --- TAMPILAN GAMBAR (SDH UPDATED UTK UNSPLASH) --- */}
-              {item.type === 'image' && (
-                <div className="w-full relative overflow-hidden" style={{ backgroundColor: item.color || '#eee', height: item.height ? `${item.height}px` : '300px' }}>
-                   {/* Panggil URL asli dari Unsplash */}
-                   <img src={item.url || "https://placehold.co/600x400?text=Design"}`} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700" alt="visual"/>
-                   
-                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
-                      <button onClick={() => toggleSave(item.id)} className="bg-white p-2 rounded-full shadow-sm hover:scale-110 transition">
-                        <div className={`w-5 h-5 ${savedIds.includes(item.id) ? 'text-red-500' : 'text-gray-600'}`}><Icons.Heart filled={savedIds.includes(item.id)} /></div>
-                      </button>
-                   </div>
-                   
-                   {/* Credit Fotografer (Wajib menurut aturan Unsplash) */}
-                   <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition">
-                     <p className="font-bold text-sm truncate">{item.title}</p>
-                     <p className="text-xs text-gray-300">by {item.user || 'Unknown'}</p>
-                   </div>
-                </div>
-              )}
-
-              {item.type === 'font' && (
-                <div className="p-6 flex flex-col h-64 justify-between bg-gray-50 group-hover:bg-white transition">
-                  <div className="flex justify-between items-start"><span className="text-xs font-bold text-gray-400 border border-gray-200 px-2 py-1 rounded">{item.style}</span><button onClick={() => toggleSave(item.id)}><div className={`w-5 h-5 ${savedIds.includes(item.id) ? 'text-red-500' : 'text-gray-300'}`}><Icons.Heart filled={savedIds.includes(item.id)} /></div></button></div>
-                  <div className="text-center"><h2 className={`text-6xl md:text-8xl mb-2 text-gray-800 ${item.style === 'Serif' ? 'font-serif' : item.style === 'Mono' ? 'font-mono' : 'font-sans'}`}>{item.preview}</h2><p className="font-bold text-xl">{item.title}</p></div>
-                </div>
-              )}
-              {item.type === 'article' && (
-                <div className="p-6 flex flex-col h-auto bg-white hover:border-gray-300 transition cursor-pointer" onClick={() => setReadingArticle(item)}>
-                  <div className="flex justify-between mb-4"><span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{item.source}</span><button onClick={(e) => {e.stopPropagation(); toggleSave(item.id);}}><div className={`w-4 h-4 ${savedIds.includes(item.id) ? 'text-black' : 'text-gray-400'}`}><Icons.Bookmark filled={savedIds.includes(item.id)} /></div></button></div>
-                  <h3 className="text-xl font-bold leading-tight mb-3 group-hover:underline decoration-2 underline-offset-4">{item.title}</h3>
-                  <div className="mt-auto flex items-center justify-between text-xs text-gray-400 border-t pt-4"><span>{item.readTime} read</span><span className="flex items-center gap-1 group-hover:translate-x-1 transition text-black font-medium">Read Now <div className="w-3 h-3"><Icons.ExternalLink /></div></span></div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default TrendHubPro;
+    if (activeTab === '
